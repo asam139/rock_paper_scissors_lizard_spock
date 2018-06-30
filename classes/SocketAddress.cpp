@@ -4,8 +4,7 @@
 
 #include "SocketAddress.h"
 
-
-static SocketAddressPtr CreateIPv4FromString(const std::string& in) {
+SocketAddressPtr SocketAddress::CreateIPv4FromString(const std::string& in) {
     const auto pos = in.find_last_of(':');
     std::string host, service;
     if (pos != std::string::npos) {

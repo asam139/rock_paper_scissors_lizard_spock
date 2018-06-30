@@ -9,7 +9,6 @@
 #include <string>
 #include <memory>
 
-
 #ifdef __APPLE__
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,15 +32,20 @@ public:
     SocketAddress(const sockaddr& sockAddr) {
         memcpy(&sockAddr_, &sockAddr, sizeof(sockaddr));
     }
-    size_t getSize() const { return sizeof(sockaddr); }
 
     static SocketAddressPtr CreateIPv4FromString(const std::string& in);
+
+    socklen_t getSize() const { return sizeof(struct sockaddr); }
+    sockaddr* const getSockAddr() const {
+        return const_cast<sockaddr*>(&sockAddr_);
+    }
+    sockaddr_in* const getAsSockAddrIn() const {
+        return reinterpret_cast<sockaddr_in*>(const_cast<sockaddr*>(&sockAddr_));
+    }
 private:
     sockaddr sockAddr_;
-    sockaddr_in* getAsSockAddrIn() {
-        return reinterpret_cast<sockaddr_in*>(&sockAddr_);
-    }
 };
+
 
 
 #endif //ROCK_PAPER_SCISSORS_LIZARD_SPOCK_SOCKETADDRESS_H
