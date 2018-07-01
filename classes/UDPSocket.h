@@ -12,9 +12,9 @@
 #ifdef __APPLE__
 #include <errno.h>
 #include <fcntl.h>      // for opening socket
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdio>
+#include <cstring>
 #include <netdb.h>
 #include <unistd.h>     // for closing socket
 #include <sys/socket.h>
@@ -26,7 +26,15 @@
 
 #endif
 
+enum SocketAddressFamily {
+    INET = AF_INET,
+    INET6 = AF_INET6
+};
+
 class SocketAddress;
+class UDPSocket;
+
+typedef std::shared_ptr<UDPSocket> UDPSocketPtr;
 
 class UDPSocket {
 public:
@@ -34,6 +42,8 @@ public:
     int bindTo(const SocketAddress& inToAddress);
     int sendTo(const void* inData, int inLen, const SocketAddress& inTo);
     int receiveFrom(void* inBuffer, size_t inLen, SocketAddress& outFrom);
+
+    static UDPSocketPtr CreateUDPSocket(SocketAddressFamily inFamily);
 private:
 
 #ifdef __APPLE__

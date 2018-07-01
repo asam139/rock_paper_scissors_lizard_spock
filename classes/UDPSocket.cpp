@@ -79,3 +79,19 @@ int UDPSocket::receiveFrom(void* inBuffer, size_t inLen, SocketAddress& outFrom)
 #endif
     }
 }
+
+
+UDPSocketPtr UDPSocket::CreateUDPSocket(SocketAddressFamily inFamily) {
+#ifdef __APPLE__
+    const int s = socket(inFamily, SOCK_DGRAM, IPPROTO_UDP);
+    if (s != 0) {
+#elif _WIN64
+    const SOCKET s = socket(inFamily, SOCK_DGRAM, IPPROTO_UDP);
+    if (s != INVALID_SOCKET) {
+#endif
+        return UDPSocketPtr(new UDPSocket(s));
+    } else {
+        std::cout << "Error Creating UDP Socket" << std::endl;
+        return nullptr;
+    }
+}
