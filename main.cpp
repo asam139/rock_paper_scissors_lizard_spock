@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <errno.h>
 #include <fcntl.h>      // for opening socket
 #include <stdlib.h>
@@ -161,12 +162,9 @@ int main(int argc , char *argv[]) {
             error("ERROR connecting");
 
         printf("Please enter the message: ");
-        //bzero(buffer, BUFFER_SIZE);
         std::cin.clear();
-        std::cin.ignore(10000, '\n');
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         fgets(buffer,BUFFER_SIZE, stdin);
-        //Remove \n character at the end of the string
-        //buffer[strlen(buffer) - 1] = 0;
 
         n = write(sockfd, buffer, strlen(buffer));
         if (n < 0)
