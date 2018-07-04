@@ -41,7 +41,9 @@ public:
     int sendTo(const void* inData, int inLen) const;
     int receiveFrom(void* inBuffer, int inLen) const;
 
-    std::shared_ptr< TCPSocket > acceptCon(SocketAddress& inFromAddress) const;
+    TCPSocketPtr acceptCon(SocketAddress& inFromAddress) const;
+
+    static TCPSocketPtr CreateTCPSocket(SocketAddressFamily inFamily);
 private:
     friend class SocketUtil;
 

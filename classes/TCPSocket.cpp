@@ -114,3 +114,19 @@ TCPSocketPtr TCPSocket::acceptCon(SocketAddress& inFromAddress) const {
         return nullptr;
     }
 }
+
+
+TCPSocketPtr TCPSocket::CreateTCPSocket(SocketAddressFamily inFamily) {
+#ifdef __APPLE__
+    const int s = socket(inFamily, SOCK_STREAM, IPPROTO_TCP);
+    if (s != 0) {
+#elif _WIN64
+        const SOCKET s = socket(inFamily, SOCK_DGRAM, IPPROTO_UDP);
+    if (s != INVALID_SOCKET) {
+#endif
+        return TCPSocketPtr(new TCPSocket(s));
+    } else {
+        std::cout << "Error Creating UDP Socket" << std::endl;
+        return nullptr;
+    }
+}
