@@ -13,7 +13,6 @@
 #include <errno.h>
 #include <fcntl.h>      // for opening socket
 #include <cstdio>
-#include <cstdio>
 #include <cstring>
 #include <netdb.h>
 #include <unistd.h>     // for closing socket
@@ -26,10 +25,7 @@
 
 #endif
 
-enum SocketAddressFamily {
-    INET = AF_INET,
-    INET6 = AF_INET6
-};
+#include "SocketAddressFamily.h"
 
 class SocketAddress;
 class UDPSocket;

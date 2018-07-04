@@ -3,4 +3,4 @@ project(rock_paper_scissors_lizard_spock)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(rock_paper_scissors_lizard_spock main.cpp classes/SocketAddress.cpp classes/SocketAddress.h classes/UDPSocket.cpp classes/UDPSocket.h)
+add_executable(rock_paper_scissors_lizard_spock main.cpp classes/SocketAddress.cpp classes/SocketAddress.h classes/UDPSocket.cpp classes/UDPSocket.h classes/TCPSocket.cpp classes/TCPSocket.h classes/SocketAddressFamily.h)

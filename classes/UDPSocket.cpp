@@ -3,9 +3,9 @@
 //
 
 #include "UDPSocket.h"
-
-#include <iostream>
 #include "SocketAddress.h"
+#include <iostream>
+
 
 #ifdef __APPLE__
 
@@ -25,12 +25,6 @@ UDPSocket::~UDPSocket() {
 
 #endif
 
-
-#ifdef __APPLE__
-
-#elif _WIN64
-
-#endif
 
 int UDPSocket::bindTo(const SocketAddress& inToAddress) {
     const int err = bind(socket_, inToAddress.getSockAddr(), inToAddress.getSize());
@@ -59,7 +53,7 @@ int UDPSocket::sendTo(const void* inData, int inLen, const SocketAddress& inTo) 
 #ifdef __APPLE__
         return errno;
 #elif _WIN64
-        return WSAGetLastError();
+        return -WSAGetLastError();
 #endif
     }
 }
@@ -75,7 +69,7 @@ int UDPSocket::receiveFrom(void* inBuffer, size_t inLen, SocketAddress& outFrom)
 #ifdef __APPLE__
         return errno;
 #elif _WIN64
-        return WSAGetLastError();
+        -return WSAGetLastError();
 #endif
     }
 }
