@@ -38,9 +38,10 @@ public:
     int connectTo(const SocketAddress& inAddress) const;
     int bindTo(const SocketAddress& inToAddress) const;
     int listenTo(int inBackLog = 32) const;
-    std::shared_ptr< TCPSocket > acceptCon(SocketAddress& inFromAddress) const;
     int sendTo(const void* inData, int inLen) const;
     int receiveFrom(void* inBuffer, int inLen) const;
+
+    std::shared_ptr< TCPSocket > acceptCon(SocketAddress& inFromAddress) const;
 private:
     friend class SocketUtil;
 
