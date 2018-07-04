@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "classes/UDPSocket.h"
+#include "classes/TCPSocket.h"
 #include "classes/SocketAddress.h"
 
 #define BUFFER_SIZE 1024
