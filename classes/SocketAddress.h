@@ -18,30 +18,23 @@
 
 #endif
 
+#include "SocketAddressFamily.h"
+
 class SocketAddress;
 
 typedef std::shared_ptr<SocketAddress> SocketAddressPtr;
 
 class SocketAddress {
 public:
-    SocketAddress(uint32_t address, uint16_t port) {
-        getAsSockAddrIn()->sin_family = AF_INET;
-        getAsSockAddrIn()->sin_addr.s_addr = htonl(address);
-        getAsSockAddrIn()->sin_port = htons(port);
-    }
-    SocketAddress(const sockaddr& sockAddr) {
-        memcpy(&sockAddr_, &sockAddr, sizeof(sockaddr));
-    }
+    SocketAddress(char* hostname, uint16_t port);
+    SocketAddress(uint32_t address, uint16_t port);
+    SocketAddress(const sockaddr& sockAddr);
 
     static SocketAddressPtr CreateIPv4FromString(const std::string& in);
 
     socklen_t getSize() const { return sizeof(struct sockaddr); }
-    sockaddr* const getSockAddr() const {
-        return const_cast<sockaddr*>(&sockAddr_);
-    }
-    sockaddr_in* const getAsSockAddrIn() const {
-        return reinterpret_cast<sockaddr_in*>(const_cast<sockaddr*>(&sockAddr_));
-    }
+    sockaddr* const getSockAddr() const;
+    sockaddr_in* const getAsSockAddrIn() const;
 private:
     sockaddr sockAddr_;
 };
