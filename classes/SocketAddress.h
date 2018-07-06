@@ -26,13 +26,14 @@ typedef std::shared_ptr<SocketAddress> SocketAddressPtr;
 
 class SocketAddress {
 public:
+    SocketAddress();
     SocketAddress(char* hostname, uint16_t port);
     SocketAddress(uint32_t address, uint16_t port);
     SocketAddress(const sockaddr& sockAddr);
 
     static SocketAddressPtr CreateIPv4FromString(const std::string& in);
 
-    socklen_t getSize() const { return sizeof(struct sockaddr); }
+    socklen_t getSize() const;
     sockaddr* const getSockAddr() const;
     sockaddr_in* const getAsSockAddrIn() const;
 private:

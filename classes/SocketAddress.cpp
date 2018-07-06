@@ -4,7 +4,10 @@
 
 #include "SocketAddress.h"
 
+SocketAddress::SocketAddress() {
+    bzero((char *) &sockAddr_, sizeof(sockAddr_));
 
+}
 
 SocketAddress::SocketAddress(char* hostname, uint16_t port) {
     bzero((char *) &sockAddr_, sizeof(sockAddr_));
@@ -72,4 +75,8 @@ sockaddr* const SocketAddress::getSockAddr() const {
 
 sockaddr_in* const SocketAddress::getAsSockAddrIn() const {
     return reinterpret_cast<sockaddr_in*>(const_cast<sockaddr*>(&sockAddr_));
+}
+
+socklen_t SocketAddress::getSize() const {
+    return sizeof(sockAddr_);
 }
