@@ -10,8 +10,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "classes/TCPSocket.h"
 #include "classes/SocketAddress.h"
+#include "classes/TCPSocket.h"
 
 #define BUFFER_SIZE 1024
 
@@ -127,10 +127,9 @@ int main(int argc , char *argv[]) {
     }
     else
     {
-        int sockfd, portno, n;
+        int n;
+        u_int16_t portno;
         char hostname[BUFFER_SIZE];
-        struct sockaddr_in serv_addr;
-        struct hostent *server;
         char buffer[BUFFER_SIZE];
 
         std::cout << "\nInsert the hostname:" << std::endl;
@@ -142,43 +141,35 @@ int main(int argc , char *argv[]) {
         std::cout << "Port:" << portno << std::endl;
         fflush(stdin);
 
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        SocketAddress *serverSocketAddress = new SocketAddress(hostname, portno);
+        std::unique_ptr<SocketAddress> serverSocketAddress_ptr (serverSocketAddress);
 
-        if (sockfd < 0)
-            error("ERROR opening socket");
-
-        server = gethostbyname(hostname);
-        if (server == NULL) {
-            fprintf(stderr,"ERROR, no such host\n");
-            exit(0);
+        TCPSocketPtr tcpSocketPtr = TCPSocket::CreateTCPSocket(INET);
+        if (tcpSocketPtr == nullptr) {
+            error("ERROR creating socket");
         }
 
-        bzero((char *) &serv_addr, sizeof(serv_addr));
-        serv_addr.sin_family = AF_INET;
-        bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-        serv_addr.sin_port = htons(portno);
-
-        if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+        if (tcpSocketPtr->connectTo(*serverSocketAddress_ptr) < 0) {
             error("ERROR connecting");
+        }
 
         printf("Please enter the message: ");
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         fgets(buffer,BUFFER_SIZE, stdin);
 
-        n = write(sockfd, buffer, strlen(buffer));
-        if (n < 0)
+        n = tcpSocketPtr->sendTo(buffer, strlen(buffer));
+        if (n < 0) {
             error("ERROR writing to socket");
+        }
 
         bzero(buffer,256);
-        n = read(sockfd, buffer, 255);
-
-        if (n < 0)
+        n = tcpSocketPtr->receiveFrom(buffer, strlen(buffer));
+        if (n < 0) {
             error("ERROR reading from socket");
-
+        }
         printf("%s\n", buffer);
 
-        close(sockfd);
         return 0;
     }
 
