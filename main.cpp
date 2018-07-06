@@ -1,10 +1,10 @@
 #include <iostream>
 #include <limits>
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>      // for opening socket
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <netdb.h>
 #include <unistd.h>     // for closing socket
 #include <sys/socket.h>
