@@ -70,7 +70,7 @@ int TCPSocket::listenTo(int inBackLog) const {
 #endif
 }
 
-int TCPSocket::sendTo(const void* inData, int inLen) const {
+int TCPSocket::sendTo(const void* inData, size_t inLen) const {
     int bytesSentCount = send(socket_, static_cast<const char*>(inData), inLen, 0);
     if (bytesSentCount < 0) {
         std::cout << "Error Sending Data" << std::endl;
@@ -83,7 +83,7 @@ int TCPSocket::sendTo(const void* inData, int inLen) const {
 #endif
     return bytesSentCount;
 }
-int TCPSocket::receiveFrom(void* inData, int inLen) const {
+int TCPSocket::receiveFrom(void* inData, size_t inLen) const {
     int bytesReceivedCount = recv(socket_, static_cast<char *>(inData), inLen, 0);
     if (bytesReceivedCount < 0) {
         std::cout << "Error Receiving Data" << std::endl;

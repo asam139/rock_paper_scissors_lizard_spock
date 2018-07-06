@@ -38,8 +38,8 @@ public:
     int connectTo(const SocketAddress& inAddress) const;
     int bindTo(const SocketAddress& inToAddress) const;
     int listenTo(int inBackLog = 32) const;
-    int sendTo(const void* inData, int inLen) const;
-    int receiveFrom(void* inBuffer, int inLen) const;
+    int sendTo(const void* inData, size_t inLen) const;
+    int receiveFrom(void* inBuffer, size_t inLen) const;
 
     TCPSocketPtr acceptCon(SocketAddress& inFromAddress) const;
 
