@@ -10,7 +10,7 @@
 #include <memory>
 
 #ifdef __APPLE__
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>      // for opening socket
 
 #include <cstring>
@@ -38,9 +38,8 @@ public:
     int connectTo(const SocketAddress& inAddress) const;
     int bindTo(const SocketAddress& inToAddress) const;
     int listenTo(int inBackLog = 32) const;
-    int sendTo(const void* inData, size_t inLen) const;
-    int receiveFrom(void* inBuffer, size_t inLen) const;
-
+    socklen_t sendTo(const void* inData, socklen_t inLen) const;
+    socklen_t receiveFrom(void* inBuffer, socklen_t inLen) const;
     TCPSocketPtr acceptCon(SocketAddress& inFromAddress) const;
 
     static TCPSocketPtr CreateTCPSocket(SocketAddressFamily inFamily);

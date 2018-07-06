@@ -70,8 +70,8 @@ int TCPSocket::listenTo(int inBackLog) const {
 #endif
 }
 
-int TCPSocket::sendTo(const void* inData, size_t inLen) const {
-    int bytesSentCount = send(socket_, static_cast<const char*>(inData), inLen, 0);
+socklen_t TCPSocket::sendTo(const void* inData, socklen_t inLen) const {
+    socklen_t bytesSentCount = send(socket_, static_cast<const char*>(inData), inLen, 0);
     if (bytesSentCount < 0) {
         std::cout << "Error Sending Data" << std::endl;
 #ifdef __APPLE__
@@ -83,8 +83,8 @@ int TCPSocket::sendTo(const void* inData, size_t inLen) const {
 #endif
     return bytesSentCount;
 }
-int TCPSocket::receiveFrom(void* inData, size_t inLen) const {
-    int bytesReceivedCount = recv(socket_, static_cast<char *>(inData), inLen, 0);
+socklen_t TCPSocket::receiveFrom(void* inData, socklen_t inLen) const {
+    socklen_t bytesReceivedCount = recv(socket_, static_cast<char *>(inData), inLen, 0);
     if (bytesReceivedCount < 0) {
         std::cout << "Error Receiving Data" << std::endl;
 #ifdef __APPLE__
