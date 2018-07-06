@@ -77,12 +77,11 @@ int TCPSocket::sendTo(const void* inData, int inLen) const {
 #ifdef __APPLE__
         return -errno;
     }
-    return bytesSentCount;
 #elif _WIN64
         return -WSAGetLastError();
     }
-    return bytesSentCount;
 #endif
+    return bytesSentCount;
 }
 int TCPSocket::receiveFrom(void* inData, int inLen) const {
     int bytesReceivedCount = recv(socket_, static_cast<char *>(inData), inLen, 0);
@@ -91,19 +90,18 @@ int TCPSocket::receiveFrom(void* inData, int inLen) const {
 #ifdef __APPLE__
         return -errno;
     }
-    return bytesReceivedCount;
 #elif _WIN64
         return -WSAGetLastError();
     }
-    return bytesReceivedCount;
 #endif
+    return bytesReceivedCount;
 }
 
 TCPSocketPtr TCPSocket::acceptCon(SocketAddress& inFromAddress) const {
     socklen_t length = inFromAddress.getSize();
 #ifdef __APPLE__
     const int newSocket = accept(socket_, inFromAddress.getSockAddr(), &length);
-    if (newSocket != 0) {
+    if (newSocket >= 0) {
 #elif _WIN64
         const SOCKET newSocket = accept(socket_, inFromAddress.getSockAddr(), &length);
     if (newSocket != INVALID_SOCKET) {
