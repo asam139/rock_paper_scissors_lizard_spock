@@ -70,8 +70,8 @@ int TCPSocket::listenTo(int inBackLog) const {
 #endif
 }
 
-socklen_t TCPSocket::sendTo(const void* inData, socklen_t inLen) const {
-    socklen_t bytesSentCount = send(socket_, static_cast<const char*>(inData), inLen, 0);
+ssize_t TCPSocket::sendTo(const void* inData, size_t inLen) const {
+    ssize_t bytesSentCount = send(socket_, inData, inLen, 0);
     if (bytesSentCount < 0) {
         std::cout << "Error Sending Data" << std::endl;
 #ifdef __APPLE__
@@ -83,8 +83,8 @@ socklen_t TCPSocket::sendTo(const void* inData, socklen_t inLen) const {
 #endif
     return bytesSentCount;
 }
-socklen_t TCPSocket::receiveFrom(void* inData, socklen_t inLen) const {
-    socklen_t bytesReceivedCount = recv(socket_, static_cast<char *>(inData), inLen, 0);
+ssize_t TCPSocket::receiveFrom(void* inData, size_t inLen) const {
+    ssize_t bytesReceivedCount = recv(socket_, inData, inLen, 0);
     if (bytesReceivedCount < 0) {
         std::cout << "Error Receiving Data" << std::endl;
 #ifdef __APPLE__
@@ -116,10 +116,10 @@ TCPSocketPtr TCPSocket::acceptCon(SocketAddress& inFromAddress) const {
 
 TCPSocketPtr TCPSocket::CreateTCPSocket(SocketAddressFamily inFamily) {
 #ifdef __APPLE__
-    const int s = socket(inFamily, SOCK_STREAM, IPPROTO_TCP);
+    const int s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (s != 0) {
 #elif _WIN64
-        const SOCKET s = socket(inFamily, SOCK_DGRAM, IPPROTO_UDP);
+        const SOCKET s = socket(inFamily, SOCK_STREAM, IPPROTO_TCP);
     if (s != INVALID_SOCKET) {
 #endif
         return TCPSocketPtr(new TCPSocket(s));
