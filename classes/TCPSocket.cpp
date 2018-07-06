@@ -32,11 +32,11 @@ int TCPSocket::connectTo(const SocketAddress& inAddress) const {
     if (err < 0) {
         std::cout << "Error Connecting Socket" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
     }
     return 0;
 #elif _WIN64
-        return WSAGetLastError();
+        return -WSAGetLastError();
     }
     return NO_ERROR;
 #endif
@@ -46,11 +46,11 @@ int TCPSocket::bindTo(const SocketAddress& inBindAddress) const {
     if (error != 0) {
         std::cout << "Error Binding Socket" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
     }
     return 0;
 #elif _WIN64
-        return WSAGetLastError();
+        return -WSAGetLastError();
     }
     return NO_ERROR;
 #endif
@@ -60,7 +60,7 @@ int TCPSocket::listenTo(int inBackLog) const {
     if (err < 0) {
         std::cout << "Error Listening Socket" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
     }
     return 0;
 #elif _WIN64
@@ -75,7 +75,7 @@ int TCPSocket::sendTo(const void* inData, int inLen) const {
     if (bytesSentCount < 0) {
         std::cout << "Error Sending Data" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
     }
     return bytesSentCount;
 #elif _WIN64
@@ -89,7 +89,7 @@ int TCPSocket::receiveFrom(void* inData, int inLen) const {
     if (bytesReceivedCount < 0) {
         std::cout << "Error Receiving Data" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
     }
     return bytesReceivedCount;
 #elif _WIN64

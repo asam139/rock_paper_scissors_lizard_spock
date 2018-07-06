@@ -31,11 +31,11 @@ int UDPSocket::bindTo(const SocketAddress& inToAddress) {
     if (err != 0) {
         std::cout << "Error Binding Socket" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
     }
     return 0;
 #elif _WIN64
-        return WSAGetLastError();
+        return -WSAGetLastError();
     }
     return NO_ERROR;
 #endif
@@ -51,7 +51,7 @@ int UDPSocket::sendTo(const void* inData, int inLen, const SocketAddress& inTo) 
     } else {
         std::cout << "Error Sending Data" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
 #elif _WIN64
         return -WSAGetLastError();
 #endif
@@ -67,9 +67,9 @@ int UDPSocket::receiveFrom(void* inBuffer, size_t inLen, SocketAddress& outFrom)
     } else {
         std::cout << "Error Binding Socket" << std::endl;
 #ifdef __APPLE__
-        return errno;
+        return -errno;
 #elif _WIN64
-        -return WSAGetLastError();
+        return -WSAGetLastError();
 #endif
     }
 }
