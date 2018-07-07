@@ -53,7 +53,6 @@ struct GameMessage {
 void error(const char *msg)
 {
     printf("Error: %s\n", msg);
-    exit(EXIT_SUCCESS);
 }
 
 void message(const char *msg)
@@ -76,7 +75,7 @@ public:
             bzero(buffer, strlen(buffer));
             memcpy(buffer, &gameMessage, BUFFER_SIZE);
             if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                error("Sending data");
+                message("Sending data");
             }
 
             do {
@@ -89,13 +88,15 @@ public:
                 bzero(buffer, strlen(buffer));
                 memcpy(buffer, &gameMessage, BUFFER_SIZE);
                 if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                    error("Sending data");
+                    message("Sending data");
+                    isFinished = true;
+                    continue;
                 }
 
                 bzero(buffer, strlen(buffer));
                 ssize_t bytes = tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE);
                 if (bytes < 0) {
-                    error("Receiving data");
+                    message("Receiving data");
                     isFinished = true;
                     continue;
                 } else if (bytes == 0 ) {
@@ -119,7 +120,7 @@ public:
             } while(!isFinished);
         } catch(...){}
 
-        error("Connection with client was lost");
+        message("Connection with client was lost");
     }
 
 };
@@ -162,10 +163,12 @@ int main(int argc , char *argv[]) {
         TCPSocketPtr serverTCPSocketPtr = TCPSocket::CreateTCPSocket(INET);
         if (serverTCPSocketPtr == nullptr) {
             error("Creating socket");
+            exit(EXIT_SUCCESS);
         }
 
         if (serverTCPSocketPtr->bindTo(*serverSocketAddress_ptr) < 0) {
             error("On binding");
+            exit(EXIT_SUCCESS);
         }
 
         // This listenTo() call tells the socket to listen to the incoming connections.
@@ -225,10 +228,12 @@ int main(int argc , char *argv[]) {
         TCPSocketPtr tcpSocketPtr = TCPSocket::CreateTCPSocket(INET);
         if (tcpSocketPtr == nullptr) {
             error("Creating socket");
+            exit(EXIT_SUCCESS);
         }
 
         if (tcpSocketPtr->connectTo(*serverSocketAddress_ptr) < 0) {
             error("Connecting");
+            exit(EXIT_SUCCESS);
         }
 
 
@@ -237,6 +242,7 @@ int main(int argc , char *argv[]) {
             bzero(buffer, strlen(buffer));
             if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
                 error("Reading from socket");
+                exit(EXIT_SUCCESS);
             }
 
             struct GameMessage gameMessage;
@@ -255,6 +261,8 @@ int main(int argc , char *argv[]) {
             bzero(buffer, strlen(buffer));
             if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
                 error("Reading from socket");
+                isStarted = false;
+                continue;
             }
             struct GameMessage gameMessage;
             memcpy(&gameMessage, buffer, BUFFER_SIZE);
@@ -287,6 +295,8 @@ int main(int argc , char *argv[]) {
                 GameElement element = (GameElement)option;
                 if (element < Rock || element > Spock) {
                     error("Wrong hand");
+                    isStarted = false;
+                    continue;
                 }
 
                 struct GameMessage gameMessage;
@@ -299,6 +309,8 @@ int main(int argc , char *argv[]) {
                 memcpy(buffer, &gameMessage, BUFFER_SIZE);
                 if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
                     error("Sending data");
+                    isStarted = false;
+                    continue;
                 }
 
 
