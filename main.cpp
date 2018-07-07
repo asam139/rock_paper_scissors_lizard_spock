@@ -155,14 +155,14 @@ int main(int argc , char *argv[]) {
         printf("Please enter the message: ");
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        fgets(buffer,BUFFER_SIZE, stdin);
+        fgets(buffer, BUFFER_SIZE, stdin);
 
-        if (tcpSocketPtr->sendTo(buffer, strlen(buffer)) < 0) {
+        if (tcpSocketPtr->sendTo(buffer, strlen(buffer)) <= 0) {
             error("ERROR writing to socket");
         }
 
         bzero(buffer, strlen(buffer));
-        if (tcpSocketPtr->receiveFrom(buffer, strlen(buffer)) <= 0) {
+        if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
             error("ERROR reading from socket");
         }
         printf("%s\n", buffer);
