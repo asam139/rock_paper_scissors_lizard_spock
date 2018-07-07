@@ -26,6 +26,10 @@ void error(const char *msg)
     exit(EXIT_SUCCESS);
 }
 
+void message(const char *msg)
+{
+    printf("-> %s\n", msg);
+}
 int main(int argc , char *argv[]) {
     Mode mode = ModeServer;
 
