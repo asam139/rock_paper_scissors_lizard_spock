@@ -310,7 +310,7 @@ int main(int argc , char *argv[]) {
                 isStarted = false;
             }
 
-        } while (!isStarted);
+        } while (isStarted);
     }
 
     return EXIT_SUCCESS;
