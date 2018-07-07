@@ -5,8 +5,6 @@
 #include "TCPSocket.h"
 #include "SocketAddress.h"
 
-#include <iostream>
-
 #ifdef __APPLE__
 
 TCPSocket::TCPSocket(int inSocket) : socket_(inSocket) {}
@@ -30,7 +28,6 @@ TCPSocket::~TCPSocket() {
 int TCPSocket::connectTo(const SocketAddress& inAddress) const {
     const int err = connect(socket_, inAddress.getSockAddr(), inAddress.getSize());
     if (err < 0) {
-        std::cout << "Error Connecting Socket" << std::endl;
 #ifdef __APPLE__
         return -errno;
     }
@@ -44,7 +41,6 @@ int TCPSocket::connectTo(const SocketAddress& inAddress) const {
 int TCPSocket::bindTo(const SocketAddress& inBindAddress) const {
     const int error = bind(socket_, inBindAddress.getSockAddr(), inBindAddress.getSize());
     if (error != 0) {
-        std::cout << "Error Binding Socket" << std::endl;
 #ifdef __APPLE__
         return -errno;
     }
@@ -58,7 +54,6 @@ int TCPSocket::bindTo(const SocketAddress& inBindAddress) const {
 int TCPSocket::listenTo(int inBackLog) const {
     const int err = listen(socket_, inBackLog);
     if (err < 0) {
-        std::cout << "Error Listening Socket" << std::endl;
 #ifdef __APPLE__
         return -errno;
     }
@@ -73,7 +68,6 @@ int TCPSocket::listenTo(int inBackLog) const {
 ssize_t TCPSocket::sendTo(const void* inData, size_t inLen) const {
     ssize_t bytesSentCount = send(socket_, inData, inLen, 0);
     if (bytesSentCount < 0) {
-        std::cout << "Error Sending Data" << std::endl;
 #ifdef __APPLE__
         return -errno;
     }
@@ -86,7 +80,6 @@ ssize_t TCPSocket::sendTo(const void* inData, size_t inLen) const {
 ssize_t TCPSocket::receiveFrom(void* inData, size_t inLen) const {
     ssize_t bytesReceivedCount = recv(socket_, inData, inLen, 0);
     if (bytesReceivedCount < 0) {
-        std::cout << "Error Receiving Data" << std::endl;
 #ifdef __APPLE__
         return -errno;
     }
@@ -108,7 +101,6 @@ TCPSocketPtr TCPSocket::acceptCon(SocketAddress& inFromAddress) const {
 #endif
         return TCPSocketPtr(new TCPSocket(newSocket));
     } else {
-        std::cout << "Error Accepting Socket" << std::endl;
         return nullptr;
     }
 }
@@ -124,7 +116,6 @@ TCPSocketPtr TCPSocket::CreateTCPSocket(SocketAddressFamily inFamily) {
 #endif
         return TCPSocketPtr(new TCPSocket(s));
     } else {
-        std::cout << "Error Creating UDP Socket" << std::endl;
         return nullptr;
     }
 }
