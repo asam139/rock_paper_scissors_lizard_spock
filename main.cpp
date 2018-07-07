@@ -22,7 +22,7 @@ enum Mode : int8_t {
 
 void error(const char *msg)
 {
-    perror(msg);
+    printf("Error: %s\n", msg);
     exit(EXIT_SUCCESS);
 }
 
@@ -54,20 +54,20 @@ int main(int argc , char *argv[]) {
         int portno;
         char buffer[BUFFER_SIZE];
 
-        std::cout << "\nInsert the port:" << std::endl;
+        std::cout << "\nInsert the port: ";
         std::cin >> portno;
-        std::cout << "Port:" << portno << std::endl;
+        std::cout << "Port: " << portno << std::endl;
 
         SocketAddress *serverSocketAddress = new SocketAddress(INADDR_ANY, portno);
         std::unique_ptr<SocketAddress> serverSocketAddress_ptr (serverSocketAddress);
 
         TCPSocketPtr serverTCPSocketPtr = TCPSocket::CreateTCPSocket(INET);
         if (serverTCPSocketPtr == nullptr) {
-            error("ERROR creating socket");
+            error("Creating socket");
         }
 
         if (serverTCPSocketPtr->bindTo(*serverSocketAddress_ptr) < 0) {
-            error("ERROR on binding");
+            error("On binding");
         }
 
         // This listenTo() call tells the socket to listen to the incoming connections.
@@ -88,7 +88,7 @@ int main(int argc , char *argv[]) {
         // communicating with the connected client.
         TCPSocketPtr clientTCPSocketPtr = serverTCPSocketPtr->acceptCon(*clientSocketAddress_ptr);
         if (clientTCPSocketPtr == nullptr) {
-            error("ERROR accepting connection");
+            error("Accepting connection");
         }
 
         printf("Server: got connection from %s port %d\n",
@@ -98,14 +98,14 @@ int main(int argc , char *argv[]) {
 
         // This send() function sends the 13 bytes of the string to the new socket
         if (clientTCPSocketPtr->sendTo("Hello, world!\n", 13) < 0) {
-            error("ERROR sending data");
+            error("Sending data");
         }
 
         bzero(buffer, strlen(buffer));
         if (clientTCPSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-            error("ERROR receiving data");
+            error("Receiving data");
         }
-        printf("Here is the message: %s\n",buffer);
+        message(buffer);
 
         return EXIT_SUCCESS;
     }
@@ -115,13 +115,13 @@ int main(int argc , char *argv[]) {
         char hostname[BUFFER_SIZE];
         char buffer[BUFFER_SIZE];
 
-        std::cout << "\nInsert the hostname:" << std::endl;
+        std::cout << "\nInsert the hostname: ";
         std::cin >> hostname;
-        std::cout << "Hostname:" << hostname << std::endl;
+        std::cout << "Hostname: " << hostname << std::endl;
 
-        std::cout << "\nInsert the port:" << std::endl;
+        std::cout << "\nInsert the port: ";
         std::cin >> portno;
-        std::cout << "Port:" << portno << std::endl;
+        std::cout << "Port: " << portno << std::endl;
         fflush(stdin);
 
         SocketAddress *serverSocketAddress = new SocketAddress(hostname, portno);
@@ -129,11 +129,11 @@ int main(int argc , char *argv[]) {
 
         TCPSocketPtr tcpSocketPtr = TCPSocket::CreateTCPSocket(INET);
         if (tcpSocketPtr == nullptr) {
-            error("ERROR creating socket");
+            error("Creating socket");
         }
 
         if (tcpSocketPtr->connectTo(*serverSocketAddress_ptr) < 0) {
-            error("ERROR connecting");
+            error("Connecting");
         }
 
         printf("Please enter the message: ");
@@ -142,14 +142,14 @@ int main(int argc , char *argv[]) {
         fgets(buffer, BUFFER_SIZE, stdin);
 
         if (tcpSocketPtr->sendTo(buffer, strlen(buffer)) <= 0) {
-            error("ERROR writing to socket");
+            error("Writing to socket");
         }
 
         bzero(buffer, strlen(buffer));
         if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-            error("ERROR reading from socket");
+            error("Reading from socket");
         }
-        printf("%s\n", buffer);
+        message(buffer);
 
         return 0;
     }
