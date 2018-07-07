@@ -15,12 +15,40 @@
 #include "classes/SocketAddress.h"
 #include "classes/TCPSocket.h"
 
-#define BUFFER_SIZE 1024
 
 enum Mode : int8_t {
     ModeServer = 0,
     ModeClient = 1
 };
+
+
+enum GameState : int8_t {
+    NotStarted = 0,
+    Started = 1,
+    Ended = 2
+};
+
+enum GameMessageType : int8_t {
+    Informative = 0,
+    Element = 1
+};
+
+enum GameElement : int8_t {
+    Rock = 0,
+    Paper = 1,
+    Scissors = 2,
+    Lizard = 3,
+    Spock = 4
+};
+
+struct GameMessage {
+    GameState gameState;
+    GameMessageType messageType;
+    char text[256];
+    GameElement element;
+};
+#define BUFFER_SIZE sizeof(GameMessage)
+
 
 void error(const char *msg)
 {
@@ -40,8 +68,15 @@ public:
             char buffer[BUFFER_SIZE];
             bool isFinished = false;
 
-            auto welcomeMessage = "Start!";
-            if (tcpSocketPtr->sendTo(welcomeMessage, strlen(welcomeMessage)) < 0) {
+            struct GameMessage gameMessage;
+            gameMessage.gameState = Started;
+            gameMessage.messageType = Informative;
+            strcpy(gameMessage.text, "Start!");
+
+            char b[sizeof(GameMessage)];
+            memcpy(b, &gameMessage, sizeof(GameMessage));
+
+            if (tcpSocketPtr->sendTo(b, sizeof(GameMessage)) < 0) {
                 error("Sending data");
             }
 
@@ -157,7 +192,7 @@ int main(int argc , char *argv[]) {
     else
     {
         int portno;
-        char hostname[BUFFER_SIZE];
+        char hostname[512];
         char buffer[BUFFER_SIZE];
 
         std::cout << "\nInsert the hostname: ";
@@ -181,31 +216,59 @@ int main(int argc , char *argv[]) {
             error("Connecting");
         }
 
-        bool isFinished = false;
+        struct GameMessage gameMessage;
+        bool isStarted = false;
         do {
             bzero(buffer, strlen(buffer));
             if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
                 error("Reading from socket");
             }
-            message(buffer);
+
+            memcpy(&gameMessage, buffer, sizeof(buffer));
+            if (gameMessage.gameState == Started) {
+                if (gameMessage.messageType == Informative) {
+                    message(gameMessage.text);
+                }
+                isStarted = true;
+            }
+
+        } while (!isStarted);
+
+        do {
 
             bzero(buffer, strlen(buffer));
-            std::cout << "Please enter the message: ";
-            //std::cin.clear();
-            //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            fgets(buffer, BUFFER_SIZE, stdin);
-
-            if('\n' == buffer[strlen(buffer) - 1]) {
-                buffer[strlen(buffer) - 1] = '\0';
+            if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
+                error("Reading from socket");
             }
+            memcpy(&gameMessage, buffer, sizeof(buffer));
 
-            size_t buffer_len = strlen(buffer);
-            if (buffer_len > 0) {
-                if (tcpSocketPtr->sendTo(buffer, buffer_len) <= 0) {
-                    error("Writing to socket");
+            if (gameMessage.gameState == Started) {
+
+                bzero(buffer, strlen(buffer));
+                std::cout << "Your turn: ";
+                //std::cin.clear();
+                //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                fgets(buffer, BUFFER_SIZE, stdin);
+
+                if('\n' == buffer[strlen(buffer) - 1]) {
+                    buffer[strlen(buffer) - 1] = '\0';
                 }
+
+                size_t buffer_len = strlen(buffer);
+                if (buffer_len > 0) {
+                    if (tcpSocketPtr->sendTo(buffer, buffer_len) <= 0) {
+                        error("Writing to socket");
+                    }
+                }
+
+            } else if (gameMessage.gameState == Ended){
+                if (gameMessage.messageType == Informative) {
+                    message(gameMessage.text);
+                }
+                isStarted = false;
             }
-        } while (!isFinished);
+
+        } while (!isStarted);
 
 
 
