@@ -9,6 +9,8 @@
 #include <unistd.h>     // for closing socket
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <vector>
+#include <thread>
 
 #include "classes/SocketAddress.h"
 #include "classes/TCPSocket.h"
@@ -30,6 +32,44 @@ void message(const char *msg)
 {
     printf("-> %s\n", msg);
 }
+
+class ClientHandler {
+public:
+    void operator()(TCPSocketPtr tcpSocketPtr){
+        try {
+            char buffer[BUFFER_SIZE];
+            bool isFinished = false;
+
+            auto welcomeMessage = "Start!";
+            if (tcpSocketPtr->sendTo(welcomeMessage, strlen(welcomeMessage)) < 0) {
+                error("Sending data");
+            }
+
+            do {
+                auto welcomeMessage = "Rock";
+                if (tcpSocketPtr->sendTo(welcomeMessage, strlen(welcomeMessage)) < 0) {
+                    error("Sending data");
+                }
+
+                bzero(buffer, strlen(buffer));
+                ssize_t bytes = tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE);
+                if (bytes < 0) {
+                    error("Receiving data");
+                    isFinished = true;
+                } else if (bytes == 0 ) {
+                    message("Finished connection");
+                    isFinished = true;
+                }
+                message(buffer);
+
+            } while(!isFinished);
+        } catch(...){}
+
+        error("Connection with client was lost");
+    }
+
+};
+
 int main(int argc , char *argv[]) {
     Mode mode = ModeServer;
 
@@ -57,6 +97,7 @@ int main(int argc , char *argv[]) {
     {
         int portno;
         char buffer[BUFFER_SIZE];
+        std::vector<std::unique_ptr<std::thread>> threads;
 
         std::cout << "\nInsert the port: ";
         std::cin >> portno;
@@ -90,28 +131,28 @@ int main(int argc , char *argv[]) {
         // So, the original socket file descriptor can continue to be used
         // for accepting new connections while the new socker file descriptor is used for
         // communicating with the connected client.
-        TCPSocketPtr clientTCPSocketPtr = serverTCPSocketPtr->acceptCon(*clientSocketAddress_ptr);
-        if (clientTCPSocketPtr == nullptr) {
-            error("Accepting connection");
-        }
+        bool isFinished = false;
+        do {
+            try {
+                TCPSocketPtr clientTCPSocketPtr = serverTCPSocketPtr->acceptCon(*clientSocketAddress_ptr);
+                if (clientTCPSocketPtr == nullptr) {
+                    error("Accepting connection");
+                }
 
-        printf("Server: got connection from %s port %d\n",
-               inet_ntoa(clientSocketAddress_ptr->getAsSockAddrIn()->sin_addr),
-               ntohs(clientSocketAddress_ptr->getAsSockAddrIn()->sin_port));
+                printf("Server: got connection from %s port %d\n",
+                       inet_ntoa(clientSocketAddress_ptr->getAsSockAddrIn()->sin_addr),
+                       ntohs(clientSocketAddress_ptr->getAsSockAddrIn()->sin_port));
+
+                std::unique_ptr<std::thread> thread_ptr(new std::thread(ClientHandler(), clientTCPSocketPtr));
+                threads.push_back(std::move(thread_ptr));
+            } catch (...) {
+
+            }
+
+        } while (!isFinished);
 
 
-        // This send() function sends the 13 bytes of the string to the new socket
-        if (clientTCPSocketPtr->sendTo("Hello, world!\n", 13) < 0) {
-            error("Sending data");
-        }
-
-        bzero(buffer, strlen(buffer));
-        if (clientTCPSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-            error("Receiving data");
-        }
-        message(buffer);
-
-        return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
     }
     else
     {
@@ -140,20 +181,33 @@ int main(int argc , char *argv[]) {
             error("Connecting");
         }
 
-        printf("Please enter the message: ");
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        fgets(buffer, BUFFER_SIZE, stdin);
+        bool isFinished = false;
+        do {
+            bzero(buffer, strlen(buffer));
+            if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
+                error("Reading from socket");
+            }
+            message(buffer);
 
-        if (tcpSocketPtr->sendTo(buffer, strlen(buffer)) <= 0) {
-            error("Writing to socket");
-        }
+            bzero(buffer, strlen(buffer));
+            std::cout << "Please enter the message: ";
+            //std::cin.clear();
+            //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            fgets(buffer, BUFFER_SIZE, stdin);
 
-        bzero(buffer, strlen(buffer));
-        if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-            error("Reading from socket");
-        }
-        message(buffer);
+            if('\n' == buffer[strlen(buffer) - 1]) {
+                buffer[strlen(buffer) - 1] = '\0';
+            }
+
+            size_t buffer_len = strlen(buffer);
+            if (buffer_len > 0) {
+                if (tcpSocketPtr->sendTo(buffer, buffer_len) <= 0) {
+                    error("Writing to socket");
+                }
+            }
+        } while (!isFinished);
+
+
 
         return 0;
     }
