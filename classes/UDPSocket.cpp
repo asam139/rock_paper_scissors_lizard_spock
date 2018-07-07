@@ -29,7 +29,6 @@ UDPSocket::~UDPSocket() {
 int UDPSocket::bindTo(const SocketAddress& inToAddress) {
     const int err = bind(socket_, inToAddress.getSockAddr(), inToAddress.getSize());
     if (err != 0) {
-        std::cout << "Error Binding Socket" << std::endl;
 #ifdef __APPLE__
         return -errno;
     }
@@ -45,33 +44,27 @@ int UDPSocket::sendTo(const void* inData, int inLen, const SocketAddress& inTo) 
     const ssize_t byteSentCount = sendto(socket_, static_cast<const char*>(inData), inLen,
                                      0,
                                      inTo.getSockAddr(), inTo.getSize());
-    if (byteSentCount >= 0) {
-        std::cout << "Sent " << byteSentCount << " bytes" << std::endl;
-        return byteSentCount;
-    } else {
-        std::cout << "Error Sending Data" << std::endl;
+    if (byteSentCount < 0) {
 #ifdef __APPLE__
         return -errno;
 #elif _WIN64
         return -WSAGetLastError();
 #endif
     }
+    return byteSentCount;
 }
 int UDPSocket::receiveFrom(void* inBuffer, size_t inLen, SocketAddress& outFrom) {
     socklen_t fromLength = outFrom.getSize();
     const ssize_t readByteCount = recvfrom(socket_, static_cast<char *>(inBuffer), inLen,
                                        0, outFrom.getSockAddr(), &fromLength);
-    if (readByteCount >= 0) {
-        std::cout << "Received " << readByteCount << " bytes" << std::endl;
-        return readByteCount;
-    } else {
-        std::cout << "Error Binding Socket" << std::endl;
+    if (readByteCount < 0) {
 #ifdef __APPLE__
         return -errno;
 #elif _WIN64
         return -WSAGetLastError();
 #endif
     }
+    return readByteCount;
 }
 
 
@@ -85,7 +78,6 @@ UDPSocketPtr UDPSocket::CreateUDPSocket(SocketAddressFamily inFamily) {
 #endif
         return UDPSocketPtr(new UDPSocket(s));
     } else {
-        std::cout << "Error Creating UDP Socket" << std::endl;
         return nullptr;
     }
 }
