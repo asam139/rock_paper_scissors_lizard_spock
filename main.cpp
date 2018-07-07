@@ -73,16 +73,22 @@ public:
             gameMessage.messageType = Informative;
             strcpy(gameMessage.text, "Start!");
 
-            char b[sizeof(GameMessage)];
-            memcpy(b, &gameMessage, sizeof(GameMessage));
-
-            if (tcpSocketPtr->sendTo(b, sizeof(GameMessage)) < 0) {
+            bzero(buffer, strlen(buffer));
+            memcpy(buffer, &gameMessage, BUFFER_SIZE);
+            if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
                 error("Sending data");
             }
 
             do {
-                auto welcomeMessage = "Rock";
-                if (tcpSocketPtr->sendTo(welcomeMessage, strlen(welcomeMessage)) < 0) {
+                gameMessage;
+                gameMessage.gameState = Started;
+                gameMessage.messageType = Informative;
+                strcpy(gameMessage.text, "Round 1: Lost");
+                gameMessage.element = Rock;
+
+                bzero(buffer, strlen(buffer));
+                memcpy(buffer, &gameMessage, BUFFER_SIZE);
+                if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
                     error("Sending data");
                 }
 
@@ -91,11 +97,24 @@ public:
                 if (bytes < 0) {
                     error("Receiving data");
                     isFinished = true;
+                    continue;
                 } else if (bytes == 0 ) {
                     message("Finished connection");
                     isFinished = true;
+                    continue;
                 }
-                message(buffer);
+
+                memcpy(&gameMessage, buffer, BUFFER_SIZE);
+                if (gameMessage.gameState == Started) {
+                    if (gameMessage.messageType == Element) {
+                        std::cout << "Element: ";
+                        std::cout << gameMessage.element << std::endl;
+                    }
+                } else if (gameMessage.gameState == Ended) {
+                    isFinished = true;
+                    continue;
+                }
+
 
             } while(!isFinished);
         } catch(...){}
@@ -131,7 +150,6 @@ int main(int argc , char *argv[]) {
     if (mode == ModeServer)
     {
         int portno;
-        char buffer[BUFFER_SIZE];
         std::vector<std::unique_ptr<std::thread>> threads;
 
         std::cout << "\nInsert the port: ";
@@ -185,9 +203,6 @@ int main(int argc , char *argv[]) {
             }
 
         } while (!isFinished);
-
-
-    return EXIT_SUCCESS;
     }
     else
     {
@@ -216,7 +231,7 @@ int main(int argc , char *argv[]) {
             error("Connecting");
         }
 
-        struct GameMessage gameMessage;
+
         bool isStarted = false;
         do {
             bzero(buffer, strlen(buffer));
@@ -224,7 +239,8 @@ int main(int argc , char *argv[]) {
                 error("Reading from socket");
             }
 
-            memcpy(&gameMessage, buffer, sizeof(buffer));
+            struct GameMessage gameMessage;
+            memcpy(&gameMessage, buffer, BUFFER_SIZE);
             if (gameMessage.gameState == Started) {
                 if (gameMessage.messageType == Informative) {
                     message(gameMessage.text);
@@ -240,26 +256,52 @@ int main(int argc , char *argv[]) {
             if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
                 error("Reading from socket");
             }
-            memcpy(&gameMessage, buffer, sizeof(buffer));
+            struct GameMessage gameMessage;
+            memcpy(&gameMessage, buffer, BUFFER_SIZE);
 
             if (gameMessage.gameState == Started) {
+                if (gameMessage.messageType == Informative) {
+                    message(gameMessage.text);
+                } else if (gameMessage.messageType == Element) {
+                    std::cout << "Element: ";
+                    std::cout << gameMessage.element << std::endl;
+                }
 
-                bzero(buffer, strlen(buffer));
-                std::cout << "Your turn: ";
+
                 //std::cin.clear();
-                //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                fgets(buffer, BUFFER_SIZE, stdin);
-
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                /*fgets(buffer, BUFFER_SIZE, stdin);
                 if('\n' == buffer[strlen(buffer) - 1]) {
                     buffer[strlen(buffer) - 1] = '\0';
+                }*/
+
+                int option;
+                std::cout << "Instructions: " << std::endl;
+                std::cout << "\t- Rock: 0" << std::endl;
+                std::cout << "\t- Paper: 1" << std::endl;
+                std::cout << "\t- Scissors: 2" << std::endl;
+                std::cout << "\t- Lizard: 3" << std::endl;
+                std::cout << "\t- Spock: 4" << std::endl;
+                std::cout << "Your turn: ";
+                std::cin >> option;
+                GameElement element = (GameElement)option;
+                if (element < Rock || element > Spock) {
+                    error("Wrong hand");
                 }
 
-                size_t buffer_len = strlen(buffer);
-                if (buffer_len > 0) {
-                    if (tcpSocketPtr->sendTo(buffer, buffer_len) <= 0) {
-                        error("Writing to socket");
-                    }
+                struct GameMessage gameMessage;
+                gameMessage.gameState = Started;
+                gameMessage.messageType = Element;
+                gameMessage.element = element;
+                strcpy(gameMessage.text, "");
+
+                bzero(buffer, strlen(buffer));
+                memcpy(buffer, &gameMessage, BUFFER_SIZE);
+                if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
+                    error("Sending data");
                 }
+
+
 
             } else if (gameMessage.gameState == Ended){
                 if (gameMessage.messageType == Informative) {
@@ -269,9 +311,7 @@ int main(int argc , char *argv[]) {
             }
 
         } while (!isStarted);
-
-
-
-        return 0;
     }
+
+    return EXIT_SUCCESS;
 }
