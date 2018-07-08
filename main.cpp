@@ -61,6 +61,30 @@ char* stringFromGameElement(GameElement element) {
     }
 }
 
+// if the first wins it returns 1
+// it it is a tie it returns 0
+// and if the seconds wins it returns -1
+int whoWin(GameElement first, GameElement second) {
+    if (first == second) {
+        return 0;
+    }
+
+    switch (first) {
+        case Rock:
+            return second == Scissors || second == Lizard ? 1 : -1;
+        case Paper:
+            return second == Rock || second == Spock ? 1 : -1;
+        case Scissors:
+            return second == Paper || second == Lizard ? 1 : -1;
+        case Lizard:
+            return second == Paper || second == Spock ? 1 : -1;
+        case Spock:
+            return second == Scissors || second == Rock ? 1 : -1;
+        default:
+            return 0;
+    }
+}
+
 struct GameMessage {
     GameState gameState;
     GameMessageType messageType;
@@ -101,7 +125,14 @@ public:
                 message("Sending data");
             }
 
+            const int maxRounds = 5;
+            int round = 0;
+            int roundWonByClient = 0;
+            int roundWonByServer = 0;
+            const int maxRoundToWin = maxRounds / 2 + 1;
             do {
+                round += 1;
+
                 bzero(buffer, strlen(buffer));
                 ssize_t bytes = tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE);
                 if (bytes < 0) {
@@ -126,14 +157,54 @@ public:
                 }
 
                 // New Element
-                GameElement element = (GameElement)localRandom.get((int)(Rock), (int)Spock);
+                GameElement clientElement = gameMessage.element;
+                GameElement serverElement = (GameElement)localRandom.get((int)(Rock), (int)Spock);
 
+                int wWin = whoWin(clientElement, serverElement);
+                if (wWin == 1) {
+                    roundWonByClient += 1;
+                } else if (wWin == -1) {
+                    roundWonByServer += 1;
+                }
 
-                // New game message
-                gameMessage.gameState = Started;
-                gameMessage.messageType = Informative;
-                strcpy(gameMessage.text, "Round 1: Lost");
-                gameMessage.element = element;
+                char *text = "";
+                if (roundWonByClient >= maxRoundToWin ||
+                    roundWonByServer >= maxRoundToWin ||
+                    round >= maxRounds) {
+                    if (roundWonByClient > roundWonByServer) {
+                        text = "YOU WIN!";
+                    } else if (roundWonByClient < roundWonByServer) {
+                        text = "YOU LOST!";
+                    } else {
+                        text = "TIE!";
+                    }
+
+                    // New game message
+                    gameMessage.gameState = Ended;
+                    gameMessage.messageType = Informative;
+                    strcpy(gameMessage.text, text);
+                    gameMessage.element = serverElement;
+
+                    isFinished = true;
+                } else {
+                    if (wWin == 1) {
+                        text = "Won";
+                    } else if (wWin == -1) {
+                        text = "Lost";
+                    } else {
+                        text = "Tie";
+                    }
+
+                    char roundText[256];
+                    sprintf(roundText, "Round %d: %s", round, text);
+
+                    // New game message
+                    gameMessage.gameState = Started;
+                    gameMessage.messageType = Informative;
+                    strcpy(gameMessage.text, roundText);
+                    gameMessage.element = serverElement;
+                }
+
 
                 bzero(buffer, strlen(buffer));
                 memcpy(buffer, &gameMessage, BUFFER_SIZE);
@@ -337,6 +408,8 @@ int main(int argc , char *argv[]) {
 
             } else if (gameMessage.gameState == Ended){
                 if (gameMessage.messageType == Informative) {
+                    std::cout << "\nEnemy Element: ";
+                    std::cout << stringFromGameElement(gameMessage.element) << std::endl;
                     message(gameMessage.text);
                 }
                 isStarted = false;
