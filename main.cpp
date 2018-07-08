@@ -44,6 +44,23 @@ enum GameElement : int8_t {
     Spock = 4
 };
 
+char* stringFromGameElement(GameElement element) {
+    switch (element) {
+        case Rock:
+            return "Rock";
+        case Paper:
+            return "Paper";
+        case Scissors:
+            return "Scissors";
+        case Lizard:
+            return "Lizard";
+        case Spock:
+            return "Spock";
+        default:
+            return "";
+    }
+}
+
 struct GameMessage {
     GameState gameState;
     GameMessageType messageType;
@@ -101,7 +118,7 @@ public:
                 if (gameMessage.gameState == Started) {
                     if (gameMessage.messageType == Element) {
                         std::cout << "Element: ";
-                        std::cout << gameMessage.element << std::endl;
+                        std::cout << stringFromGameElement(gameMessage.element) << std::endl;
                     }
                 } else if (gameMessage.gameState == Ended) {
                     isFinished = true;
@@ -314,7 +331,7 @@ int main(int argc , char *argv[]) {
             if (gameMessage.gameState == Started) {
                 if (gameMessage.messageType == Informative) {
                     std::cout << "\nEnemy Element: ";
-                    std::cout << gameMessage.element << std::endl;
+                    std::cout << stringFromGameElement(gameMessage.element) << std::endl;
                     message(gameMessage.text);
                 }
 
