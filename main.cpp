@@ -26,9 +26,8 @@ enum Mode : int8_t {
 };
 
 enum GameState : int8_t {
-    NotStarted = 0,
-    Started = 1,
-    Ended = 2
+    Started = 0,
+    Ended = 1
 };
 
 enum GameMessageType : int8_t {
@@ -45,20 +44,28 @@ enum GameElement : int8_t {
 };
 
 char* stringFromGameElement(GameElement element) {
+    char *text = (char *)"";
     switch (element) {
         case Rock:
-            return "Rock";
+            text = (char *)"Rock";
+            break;
         case Paper:
-            return "Paper";
+            text = (char *)"Paper";
+            break;
         case Scissors:
-            return "Scissors";
+            text = (char *)"Scissors";
+            break;
         case Lizard:
-            return "Lizard";
+            text = (char *)"Lizard";
+            break;
         case Spock:
-            return "Spock";
+            text = (char *)"Spock";
+            break;
         default:
-            return "";
+            break;
     }
+
+    return text;
 }
 
 // if the first wins it returns 1
@@ -114,7 +121,7 @@ public:
             bool isFinished = false;
             Random localRandom{};
 
-            struct GameMessage gameMessage;
+            struct GameMessage gameMessage = {};
             gameMessage.gameState = Started;
             gameMessage.messageType = Informative;
             strcpy(gameMessage.text, "Start!");
@@ -157,8 +164,8 @@ public:
                 }
 
                 // New Element
-                GameElement clientElement = gameMessage.element;
-                GameElement serverElement = (GameElement)localRandom.get((int)(Rock), (int)Spock);
+                auto clientElement = gameMessage.element;
+                auto serverElement = (GameElement)localRandom.get((int)(Rock), (int)Spock);
 
                 int wWin = whoWin(clientElement, serverElement);
                 if (wWin == 1) {
@@ -167,16 +174,17 @@ public:
                     roundWonByServer += 1;
                 }
 
-                char *text = "";
+
                 if (roundWonByClient >= maxRoundToWin ||
                     roundWonByServer >= maxRoundToWin ||
                     round >= maxRounds) {
+                    char *text;
                     if (roundWonByClient > roundWonByServer) {
-                        text = "YOU WIN!";
+                        text = (char*)"YOU WIN!";
                     } else if (roundWonByClient < roundWonByServer) {
-                        text = "YOU LOST!";
+                        text = (char*)"YOU LOST!";
                     } else {
-                        text = "TIE!";
+                        text = (char*)"TIE!";
                     }
 
                     // New game message
@@ -187,12 +195,13 @@ public:
 
                     isFinished = true;
                 } else {
+                    char *text;
                     if (wWin == 1) {
-                        text = "Won";
+                        text = (char*)"Won";
                     } else if (wWin == -1) {
-                        text = "Lost";
+                        text = (char*)"Lost";
                     } else {
-                        text = "Tie";
+                        text = (char*)"Tie";
                     }
 
                     char roundText[256];
@@ -223,7 +232,7 @@ public:
 };
 
 int main(int argc , char *argv[]) {
-    Mode mode = ModeServer;
+    Mode mode;
 
     std::cout << "\n-------------------------------------" << std::endl;
     std::cout << "\t\t\tWelcome to" << std::endl;
@@ -247,14 +256,14 @@ int main(int argc , char *argv[]) {
 
     if (mode == ModeServer)
     {
-        int portno;
+        unsigned int portno;
         std::vector<std::unique_ptr<std::thread>> threads;
 
         std::cout << "\nInsert the port: ";
         std::cin >> portno;
         std::cout << "Port: " << portno << std::endl;
 
-        SocketAddress *serverSocketAddress = new SocketAddress(INADDR_ANY, portno);
+        auto serverSocketAddress = new SocketAddress(INADDR_ANY, (uint16_t)portno);
         std::unique_ptr<SocketAddress> serverSocketAddress_ptr (serverSocketAddress);
 
         TCPSocketPtr serverTCPSocketPtr = TCPSocket::CreateTCPSocket(INET);
@@ -275,7 +284,7 @@ int main(int argc , char *argv[]) {
         serverTCPSocketPtr->listenTo(5);
 
         // The accept() call actually accepts an incoming connection
-        SocketAddress *clientSocketAddress = new SocketAddress();
+        auto clientSocketAddress = new SocketAddress();
         std::unique_ptr<SocketAddress> clientSocketAddress_ptr (clientSocketAddress);
 
         // This accept() function will write the connecting client's address info
@@ -306,7 +315,7 @@ int main(int argc , char *argv[]) {
     }
     else
     {
-        int portno;
+        unsigned int portno;
         char hostname[512];
         char buffer[BUFFER_SIZE];
 
@@ -319,7 +328,7 @@ int main(int argc , char *argv[]) {
         std::cout << "Port: " << portno << std::endl;
         fflush(stdin);
 
-        SocketAddress *serverSocketAddress = new SocketAddress(hostname, portno);
+        auto serverSocketAddress = new SocketAddress(hostname, (uint16_t)portno);
         std::unique_ptr<SocketAddress> serverSocketAddress_ptr (serverSocketAddress);
 
         TCPSocketPtr tcpSocketPtr = TCPSocket::CreateTCPSocket(INET);
@@ -369,7 +378,7 @@ int main(int argc , char *argv[]) {
             std::cout << "\t- Spock: 4" << std::endl;
             std::cout << "Your turn: ";
             std::cin >> option;
-            GameElement element = (GameElement)option;
+            auto element = (GameElement)option;
             if (element < Rock || element > Spock) {
                 error("Wrong hand");
                 isStarted = false;
