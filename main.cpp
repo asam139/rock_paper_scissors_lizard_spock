@@ -85,19 +85,6 @@ public:
             }
 
             do {
-                gameMessage.gameState = Started;
-                gameMessage.messageType = Informative;
-                strcpy(gameMessage.text, "Round 1: Lost");
-                gameMessage.element = (GameElement)localRandom.get((int)(Rock), (int)Spock);
-
-                bzero(buffer, strlen(buffer));
-                memcpy(buffer, &gameMessage, BUFFER_SIZE);
-                if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                    message("Sending data");
-                    isFinished = true;
-                    continue;
-                }
-
                 bzero(buffer, strlen(buffer));
                 ssize_t bytes = tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE);
                 if (bytes < 0) {
@@ -117,6 +104,24 @@ public:
                         std::cout << gameMessage.element << std::endl;
                     }
                 } else if (gameMessage.gameState == Ended) {
+                    isFinished = true;
+                    continue;
+                }
+
+                // New Element
+                GameElement element = (GameElement)localRandom.get((int)(Rock), (int)Spock);
+
+
+                // New game message
+                gameMessage.gameState = Started;
+                gameMessage.messageType = Informative;
+                strcpy(gameMessage.text, "Round 1: Lost");
+                gameMessage.element = element;
+
+                bzero(buffer, strlen(buffer));
+                memcpy(buffer, &gameMessage, BUFFER_SIZE);
+                if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
+                    message("Sending data");
                     isFinished = true;
                     continue;
                 }
@@ -241,36 +246,71 @@ int main(int argc , char *argv[]) {
         }
 
 
+        // Wait message to start game
         bool isStarted = false;
+
+        bzero(buffer, strlen(buffer));
+        if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
+            error("Reading from socket");
+            exit(EXIT_SUCCESS);
+        }
+
+        struct GameMessage gameMessage;
+        memcpy(&gameMessage, buffer, BUFFER_SIZE);
+        if (gameMessage.gameState == Started) {
+            if (gameMessage.messageType == Informative) {
+                message(gameMessage.text);
+            }
+            isStarted = true;
+        }
+
         do {
+            //std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            /*fgets(buffer, BUFFER_SIZE, stdin);
+            if('\n' == buffer[strlen(buffer) - 1]) {
+                buffer[strlen(buffer) - 1] = '\0';
+            }*/
+
+            int option;
+            std::cout << "\nInstructions: " << std::endl;
+            std::cout << "\t- Rock: 0" << std::endl;
+            std::cout << "\t- Paper: 1" << std::endl;
+            std::cout << "\t- Scissors: 2" << std::endl;
+            std::cout << "\t- Lizard: 3" << std::endl;
+            std::cout << "\t- Spock: 4" << std::endl;
+            std::cout << "Your turn: ";
+            std::cin >> option;
+            GameElement element = (GameElement)option;
+            if (element < Rock || element > Spock) {
+                error("Wrong hand");
+                isStarted = false;
+                continue;
+            }
+
+            gameMessage.gameState = Started;
+            gameMessage.messageType = Element;
+            gameMessage.element = element;
+            strcpy(gameMessage.text, "");
+
             bzero(buffer, strlen(buffer));
-            if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-                error("Reading from socket");
-                exit(EXIT_SUCCESS);
+            memcpy(buffer, &gameMessage, BUFFER_SIZE);
+            if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
+                error("Sending data");
+                isStarted = false;
+                continue;
             }
 
-            struct GameMessage gameMessage;
-            memcpy(&gameMessage, buffer, BUFFER_SIZE);
-            if (gameMessage.gameState == Started) {
-                if (gameMessage.messageType == Informative) {
-                    message(gameMessage.text);
-                }
-                isStarted = true;
-            }
-
-        } while (!isStarted);
-
-        do {
-
+            // Receive new game message
             bzero(buffer, strlen(buffer));
             if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
                 error("Reading from socket");
                 isStarted = false;
                 continue;
             }
-            struct GameMessage gameMessage;
             memcpy(&gameMessage, buffer, BUFFER_SIZE);
 
+            // Process new game message
             if (gameMessage.gameState == Started) {
                 if (gameMessage.messageType == Informative) {
                     std::cout << "\nEnemy Element: ";
@@ -278,51 +318,13 @@ int main(int argc , char *argv[]) {
                     message(gameMessage.text);
                 }
 
-                //std::cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                /*fgets(buffer, BUFFER_SIZE, stdin);
-                if('\n' == buffer[strlen(buffer) - 1]) {
-                    buffer[strlen(buffer) - 1] = '\0';
-                }*/
-
-                int option;
-                std::cout << "\nInstructions: " << std::endl;
-                std::cout << "\t- Rock: 0" << std::endl;
-                std::cout << "\t- Paper: 1" << std::endl;
-                std::cout << "\t- Scissors: 2" << std::endl;
-                std::cout << "\t- Lizard: 3" << std::endl;
-                std::cout << "\t- Spock: 4" << std::endl;
-                std::cout << "Your turn: ";
-                std::cin >> option;
-                GameElement element = (GameElement)option;
-                if (element < Rock || element > Spock) {
-                    error("Wrong hand");
-                    isStarted = false;
-                    continue;
-                }
-
-                struct GameMessage gameMessage;
-                gameMessage.gameState = Started;
-                gameMessage.messageType = Element;
-                gameMessage.element = element;
-                strcpy(gameMessage.text, "");
-
-                bzero(buffer, strlen(buffer));
-                memcpy(buffer, &gameMessage, BUFFER_SIZE);
-                if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                    error("Sending data");
-                    isStarted = false;
-                    continue;
-                }
-
-
-
             } else if (gameMessage.gameState == Ended){
                 if (gameMessage.messageType == Informative) {
                     message(gameMessage.text);
                 }
                 isStarted = false;
             }
+
 
         } while (isStarted);
     }
