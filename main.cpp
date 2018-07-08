@@ -110,7 +110,7 @@ class ClientHandler {
 private:
 
 public:
-    void operator()(const TCPSocketPtr tcpSocketPtr){
+    void operator()(const TCPSocketPtr &tcpSocketPtr){
         try {
             char buffer[BUFFER_SIZE];
             bool isFinished = false;
