@@ -68,27 +68,33 @@ char* stringFromGameElement(GameElement element) {
     return text;
 }
 
-// if the first wins it returns 1
-// it it is a tie it returns 0
-// and if the seconds wins it returns -1
-int whoWin(GameElement first, GameElement second) {
+enum GameRound : int8_t {
+    Lost = -1,
+    Tie = 0,
+    Win = 1,
+};
+
+// if the first wins it returns Win (GameRound enum)
+// it it is a tie it returns Tie (GameRound enum)
+// and if the seconds wins it returns Lost (GameRound enum)
+GameRound whoWin(GameElement first, GameElement second) {
     if (first == second) {
-        return 0;
+        return Tie;
     }
 
     switch (first) {
         case Rock:
-            return second == Scissors || second == Lizard ? 1 : -1;
+            return second == Scissors || second == Lizard ? Win : Lost;
         case Paper:
-            return second == Rock || second == Spock ? 1 : -1;
+            return second == Rock || second == Spock ? Win : Lost;
         case Scissors:
-            return second == Paper || second == Lizard ? 1 : -1;
+            return second == Paper || second == Lizard ? Win : Lost;
         case Lizard:
-            return second == Paper || second == Spock ? 1 : -1;
+            return second == Paper || second == Spock ? Win : Lost;
         case Spock:
-            return second == Scissors || second == Rock ? 1 : -1;
+            return second == Scissors || second == Rock ? Win : Lost;
         default:
-            return 0;
+            return Tie;
     }
 }
 
@@ -157,10 +163,10 @@ public:
                 auto clientElement = gameMessage.element;
                 auto serverElement = (GameElement)localRandom.get((int)(Rock), (int)Spock);
 
-                int wWin = whoWin(clientElement, serverElement);
-                if (wWin == 1) {
+                GameRound wWin = whoWin(clientElement, serverElement);
+                if (wWin == Win) {
                     roundWonByClient += 1;
-                } else if (wWin == -1) {
+                } else if (wWin == Lost) {
                     roundWonByServer += 1;
                 }
 
