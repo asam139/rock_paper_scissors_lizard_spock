@@ -143,7 +143,7 @@ public:
                 isFinished = true;
             }
 
-            const int maxRounds = 5;
+            const int maxRounds = 10;
             int round = 0;
             int roundWonByClient = 0;
             int roundWonByServer = 0;
