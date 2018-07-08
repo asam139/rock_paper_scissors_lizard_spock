@@ -100,17 +100,6 @@ struct GameMessage {
 };
 #define BUFFER_SIZE sizeof(GameMessage)
 
-
-void error(const char *msg)
-{
-    printf("Error: %s\n", msg);
-}
-
-void message(const char *msg)
-{
-    printf("-> %s\n", msg);
-}
-
 class ClientHandler {
 private:
 
@@ -129,7 +118,8 @@ public:
             bzero(buffer, strlen(buffer));
             memcpy(buffer, &gameMessage, BUFFER_SIZE);
             if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                message("Sending data");
+                std::cout << "Error: sending data" << std::endl;
+                isFinished = true;
             }
 
             const int maxRounds = 5;
@@ -143,11 +133,11 @@ public:
                 bzero(buffer, strlen(buffer));
                 ssize_t bytes = tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE);
                 if (bytes < 0) {
-                    message("Receiving data");
+                    std::cout << "Error: receiving data" << std::endl;
                     isFinished = true;
                     continue;
                 } else if (bytes == 0 ) {
-                    message("Finished connection");
+                    std::cout << "Finished connection" << std::endl;
                     isFinished = true;
                     continue;
                 }
@@ -218,7 +208,7 @@ public:
                 bzero(buffer, strlen(buffer));
                 memcpy(buffer, &gameMessage, BUFFER_SIZE);
                 if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                    message("Sending data");
+                    std::cout << "Error: sending data" << std::endl;
                     isFinished = true;
                     continue;
                 }
@@ -227,7 +217,7 @@ public:
             } while(!isFinished);
         } catch(...){}
 
-        message("Connection with client was lost");
+        std::cout << "Connection with client was lost" << std::endl;
     }
 };
 
@@ -268,12 +258,12 @@ int main(int argc , char *argv[]) {
 
         TCPSocketPtr serverTCPSocketPtr = TCPSocket::CreateTCPSocket(INET);
         if (serverTCPSocketPtr == nullptr) {
-            error("Creating socket");
+            std::cout << "Error: creating socket" << std::endl;
             exit(EXIT_SUCCESS);
         }
 
         if (serverTCPSocketPtr->bindTo(*serverSocketAddress_ptr) < 0) {
-            error("On binding");
+            std::cout << "Error: binding socket" << std::endl;
             exit(EXIT_SUCCESS);
         }
 
@@ -298,7 +288,7 @@ int main(int argc , char *argv[]) {
             try {
                 TCPSocketPtr clientTCPSocketPtr = serverTCPSocketPtr->acceptCon(*clientSocketAddress_ptr);
                 if (clientTCPSocketPtr == nullptr) {
-                    error("Accepting connection");
+                    std::cout << "Error: accepting connection" << std::endl;
                 }
 
                 printf("Server: got connection from %s port %d\n",
@@ -333,12 +323,12 @@ int main(int argc , char *argv[]) {
 
         TCPSocketPtr tcpSocketPtr = TCPSocket::CreateTCPSocket(INET);
         if (tcpSocketPtr == nullptr) {
-            error("Creating socket");
+            std::cout << "Error: creating socket" << std::endl;
             exit(EXIT_SUCCESS);
         }
 
         if (tcpSocketPtr->connectTo(*serverSocketAddress_ptr) < 0) {
-            error("Connecting");
+            std::cout << "Error: connecting socket" << std::endl;
             exit(EXIT_SUCCESS);
         }
 
@@ -348,7 +338,7 @@ int main(int argc , char *argv[]) {
 
         bzero(buffer, strlen(buffer));
         if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-            error("Reading from socket");
+            std::cout << "Error: reading socket" << std::endl;
             exit(EXIT_SUCCESS);
         }
 
@@ -356,7 +346,7 @@ int main(int argc , char *argv[]) {
         memcpy(&gameMessage, buffer, BUFFER_SIZE);
         if (gameMessage.gameState == Started) {
             if (gameMessage.messageType == Informative) {
-                message(gameMessage.text);
+                std::cout << "-> " << gameMessage.text << std::endl;
             }
             isStarted = true;
         }
@@ -370,30 +360,30 @@ int main(int argc , char *argv[]) {
             }*/
 
             int option;
-            std::cout << "\nInstructions: " << std::endl;
+            std::cout << "\n-> Instructions: " << std::endl;
             std::cout << "\t- Rock: 0" << std::endl;
             std::cout << "\t- Paper: 1" << std::endl;
             std::cout << "\t- Scissors: 2" << std::endl;
             std::cout << "\t- Lizard: 3" << std::endl;
             std::cout << "\t- Spock: 4" << std::endl;
-            std::cout << "Your turn: ";
+            std::cout << "-> Your turn: ";
             std::cin >> option;
-            auto element = (GameElement)option;
-            if (element < Rock || element > Spock) {
-                error("Wrong hand");
+            auto clientElement = (GameElement)option;
+            if (clientElement < Rock || clientElement > Spock) {
+                std::cout << "Error: Invalid hand" << std::endl;
                 isStarted = false;
                 continue;
             }
 
             gameMessage.gameState = Started;
             gameMessage.messageType = Element;
-            gameMessage.element = element;
+            gameMessage.element = clientElement;
             strcpy(gameMessage.text, "");
 
             bzero(buffer, strlen(buffer));
             memcpy(buffer, &gameMessage, BUFFER_SIZE);
             if (tcpSocketPtr->sendTo(buffer, BUFFER_SIZE) < 0) {
-                error("Sending data");
+                std::cout << "Error: sending data" << std::endl;
                 isStarted = false;
                 continue;
             }
@@ -401,7 +391,7 @@ int main(int argc , char *argv[]) {
             // Receive new game message
             bzero(buffer, strlen(buffer));
             if (tcpSocketPtr->receiveFrom(buffer, BUFFER_SIZE) <= 0) {
-                error("Reading from socket");
+                std::cout << "Error: reading socket" << std::endl;
                 isStarted = false;
                 continue;
             }
@@ -410,16 +400,14 @@ int main(int argc , char *argv[]) {
             // Process new game message
             if (gameMessage.gameState == Started) {
                 if (gameMessage.messageType == Informative) {
-                    std::cout << "\nEnemy Element: ";
-                    std::cout << stringFromGameElement(gameMessage.element) << std::endl;
-                    message(gameMessage.text);
+                    std::cout << "\n-> " << stringFromGameElement(clientElement) << " vs " << stringFromGameElement(gameMessage.element) << std::endl;
+                    std::cout << "-> " << gameMessage.text << std::endl;
                 }
 
             } else if (gameMessage.gameState == Ended){
                 if (gameMessage.messageType == Informative) {
-                    std::cout << "\nEnemy Element: ";
-                    std::cout << stringFromGameElement(gameMessage.element) << std::endl;
-                    message(gameMessage.text);
+                    std::cout << "\n-> " << stringFromGameElement(clientElement) << " vs " << stringFromGameElement(gameMessage.element) << std::endl;
+                    std::cout << "-> " << gameMessage.text << std::endl;
                 }
                 isStarted = false;
             }
