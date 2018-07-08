@@ -276,8 +276,8 @@ int main(int argc , char *argv[]) {
         // This listenTo() call tells the socket to listen to the incoming connections.
         // The listenTo() function places all incoming connection into a backlog queue
         // until accept() call accepts the connection.
-        // Here, we set the maximum size for the backlog queue to 5.
-        serverTCPSocketPtr->listenTo(5);
+        // Here, we set the maximum size for the backlog queue to 20.
+        serverTCPSocketPtr->listenTo(20);
 
         // The accept() call actually accepts an incoming connection
         auto clientSocketAddress = new SocketAddress();
