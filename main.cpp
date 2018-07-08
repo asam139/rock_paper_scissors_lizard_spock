@@ -15,12 +15,15 @@
 #include "classes/SocketAddress.h"
 #include "classes/TCPSocket.h"
 
+#include "effolkronium/random.hpp"
+
+// get base random alias which is auto seeded and has static API and internal state
+using Random = effolkronium::random_static;
 
 enum Mode : int8_t {
     ModeServer = 0,
     ModeClient = 1
 };
-
 
 enum GameState : int8_t {
     NotStarted = 0,
@@ -61,11 +64,14 @@ void message(const char *msg)
 }
 
 class ClientHandler {
+private:
+
 public:
     void operator()(TCPSocketPtr tcpSocketPtr){
         try {
             char buffer[BUFFER_SIZE];
             bool isFinished = false;
+            Random localRandom{};
 
             struct GameMessage gameMessage;
             gameMessage.gameState = Started;
@@ -79,11 +85,10 @@ public:
             }
 
             do {
-                gameMessage;
                 gameMessage.gameState = Started;
                 gameMessage.messageType = Informative;
                 strcpy(gameMessage.text, "Round 1: Lost");
-                gameMessage.element = Rock;
+                gameMessage.element = (GameElement)localRandom.get((int)(Rock), (int)Spock);
 
                 bzero(buffer, strlen(buffer));
                 memcpy(buffer, &gameMessage, BUFFER_SIZE);
@@ -122,7 +127,6 @@ public:
 
         message("Connection with client was lost");
     }
-
 };
 
 int main(int argc , char *argv[]) {
@@ -269,12 +273,10 @@ int main(int argc , char *argv[]) {
 
             if (gameMessage.gameState == Started) {
                 if (gameMessage.messageType == Informative) {
-                    message(gameMessage.text);
-                } else if (gameMessage.messageType == Element) {
-                    std::cout << "Element: ";
+                    std::cout << "\nEnemy Element: ";
                     std::cout << gameMessage.element << std::endl;
+                    message(gameMessage.text);
                 }
-
 
                 //std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -284,7 +286,7 @@ int main(int argc , char *argv[]) {
                 }*/
 
                 int option;
-                std::cout << "Instructions: " << std::endl;
+                std::cout << "\nInstructions: " << std::endl;
                 std::cout << "\t- Rock: 0" << std::endl;
                 std::cout << "\t- Paper: 1" << std::endl;
                 std::cout << "\t- Scissors: 2" << std::endl;
