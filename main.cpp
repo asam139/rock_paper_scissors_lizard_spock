@@ -44,7 +44,7 @@ enum GameElement : int8_t {
 };
 
 char* stringFromGameElement(GameElement element) {
-    char *text = (char *)"";
+    auto text = (char *)"";
     switch (element) {
         case Rock:
             text = (char *)"Rock";
@@ -104,7 +104,7 @@ class ClientHandler {
 private:
 
 public:
-    void operator()(TCPSocketPtr tcpSocketPtr){
+    void operator()(const TCPSocketPtr tcpSocketPtr){
         try {
             char buffer[BUFFER_SIZE];
             bool isFinished = false;
@@ -246,14 +246,14 @@ int main(int argc , char *argv[]) {
 
     if (mode == ModeServer)
     {
-        unsigned int portno;
+        unsigned int portNumber;
         std::vector<std::unique_ptr<std::thread>> threads;
 
         std::cout << "\nInsert the port: ";
-        std::cin >> portno;
-        std::cout << "Port: " << portno << std::endl;
+        std::cin >> portNumber;
+        std::cout << "Port: " << portNumber << std::endl;
 
-        auto serverSocketAddress = new SocketAddress(INADDR_ANY, (uint16_t)portno);
+        auto serverSocketAddress = new SocketAddress(INADDR_ANY, (uint16_t)portNumber);
         std::unique_ptr<SocketAddress> serverSocketAddress_ptr (serverSocketAddress);
 
         TCPSocketPtr serverTCPSocketPtr = TCPSocket::CreateTCPSocket(INET);
@@ -298,14 +298,14 @@ int main(int argc , char *argv[]) {
                 std::unique_ptr<std::thread> thread_ptr(new std::thread(ClientHandler(), clientTCPSocketPtr));
                 threads.push_back(std::move(thread_ptr));
             } catch (...) {
-
+                isFinished = true;
             }
 
         } while (!isFinished);
     }
     else
     {
-        unsigned int portno;
+        unsigned int portNumber;
         char hostname[512];
         char buffer[BUFFER_SIZE];
 
@@ -314,11 +314,11 @@ int main(int argc , char *argv[]) {
         std::cout << "Hostname: " << hostname << std::endl;
 
         std::cout << "\nInsert the port: ";
-        std::cin >> portno;
-        std::cout << "Port: " << portno << std::endl;
+        std::cin >> portNumber;
+        std::cout << "Port: " << portNumber << std::endl;
         fflush(stdin);
 
-        auto serverSocketAddress = new SocketAddress(hostname, (uint16_t)portno);
+        auto serverSocketAddress = new SocketAddress(hostname, (uint16_t)portNumber);
         std::unique_ptr<SocketAddress> serverSocketAddress_ptr (serverSocketAddress);
 
         TCPSocketPtr tcpSocketPtr = TCPSocket::CreateTCPSocket(INET);
