@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <vector>
 #include <thread>
+#include <future>
 
 #include "classes/SocketAddress.h"
 #include "classes/TCPSocket.h"
@@ -105,6 +106,20 @@ struct GameMessage {
     GameElement element;
 };
 #define BUFFER_SIZE sizeof(GameMessage)
+
+
+static std::vector<std::unique_ptr<std::thread>> threads;
+static std::mutex threadsMutex;
+void removeThread(std::thread::id id)
+{
+    std::lock_guard<std::mutex> lock(threadsMutex);
+    std::vector<std::unique_ptr<std::thread>>::iterator iter = std::find_if(threads.begin(), threads.end(), [=](std::unique_ptr<std::thread> &t) { return (t->get_id() == id); });
+    if (iter != threads.end())
+    {
+        iter->get()->detach();
+        threads.erase(iter);
+    }
+}
 
 class ClientHandler {
 private:
@@ -224,6 +239,8 @@ public:
         } catch(...){}
 
         std::cout << "Connection with client was lost" << std::endl;
+
+        std::async(removeThread, std::this_thread::get_id());
     }
 };
 
